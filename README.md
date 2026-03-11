@@ -28,7 +28,7 @@ There is no custom application code here. The value is the recipe and the docume
 
 1. Clone this repo:
    ```bash
-   git clone https://github.com/psterpe/strava-mcp-docker.git
+   git clone https://github.com/pete-builds/strava-mcp-docker.git
    cd strava-mcp-docker
    ```
 
