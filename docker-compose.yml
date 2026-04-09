@@ -1,13 +1,9 @@
 services:
   strava-mcp:
-    image: node:22-alpine
+    build: .
     container_name: strava-mcp
     restart: unless-stopped
-    working_dir: /app
-    command:
-      - sh
-      - -lc
-      - npx -y mcp-proxy --port 8080 --apiKey "$MCP_API_KEY" -- npx -y strava-mcp-server
+    command: ["mcp-proxy", "--port", "8080", "--apiKey", "${MCP_API_KEY}", "--", "strava-mcp-server"]
     environment:
       - MCP_API_KEY
       - STRAVA_CLIENT_ID
@@ -18,6 +14,11 @@ services:
       - "${STRAVA_MCP_PORT:-18201}:8080"
     volumes:
       - strava-config:/root/.config/strava-mcp
+    networks:
+      - strava-net
 
 volumes:
   strava-config:
+
+networks:
+  strava-net:
