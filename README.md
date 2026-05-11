@@ -1,6 +1,6 @@
 # strava-mcp-docker
 
-A ready-to-run Docker recipe that serves the Strava MCP server over HTTP/SSE, so any MCP client on your network can connect.
+A ready-to-run Docker recipe that serves the Strava MCP server over HTTP (Streamable HTTP and legacy SSE), so any MCP client on your network can connect.
 
 ## Why Docker + mcp-proxy?
 
@@ -14,7 +14,9 @@ A ready-to-run Docker recipe that serves the Strava MCP server over HTTP/SSE, so
 
 Several Strava MCP server implementations exist ([r-huijts/strava-mcp](https://github.com/r-huijts/strava-mcp), [eddmann/strava-mcp](https://github.com/eddmann/strava-mcp-server), and others). They give you the server code and leave deployment up to you.
 
-This repo gives you the deployment. One `docker compose up -d` and you're done. It bridges the stdio-based `strava-mcp-server` to HTTP/SSE via `mcp-proxy`, so any MCP client on your network can connect over a standard HTTP endpoint. It also documents the OAuth scope pitfall that isn't covered anywhere else (see below).
+This repo gives you the deployment. One `docker compose up -d` and you're done. It bridges the stdio-based `strava-mcp-server` to HTTP via [`mcp-proxy`](https://github.com/punkpeye/mcp-proxy), so any MCP client on your network can connect over a standard HTTP endpoint. The proxy serves **both transports** simultaneously: Streamable HTTP on `/mcp` (current MCP spec, 2025-06-18) and HTTP+SSE on `/sse` (deprecated, kept for older clients). It also documents the OAuth scope pitfall that isn't covered anywhere else (see below).
+
+Pinned versions: `mcp-proxy@6.4.6`, `strava-mcp-server@1.2.1`. Build is reproducible.
 
 There is no custom application code here. The value is the recipe and the documentation.
 
@@ -89,7 +91,38 @@ The response will include `access_token` and `refresh_token`. Copy both values i
 
 ## Connecting to Claude Code
 
-Add this to your Claude Code MCP settings (`~/.claude/settings.json` or project-level `.mcp.json`):
+The container serves two endpoints. Pick one:
+
+- **Streamable HTTP (recommended):** `http://YOUR_SERVER_IP:18201/mcp` — current MCP transport (spec 2025-06-18)
+- **HTTP+SSE (legacy):** `http://YOUR_SERVER_IP:18201/sse` — deprecated in MCP 2025-03-26 but still served for older clients
+
+### Streamable HTTP (recommended)
+
+Via CLI:
+
+```bash
+claude mcp add strava http://YOUR_SERVER_IP:18201/mcp --transport http -H "X-API-Key: your-mcp-api-key"
+```
+
+Or in settings JSON:
+
+```json
+{
+  "mcpServers": {
+    "strava": {
+      "type": "http",
+      "url": "http://YOUR_SERVER_IP:18201/mcp",
+      "headers": {
+        "X-API-Key": "your-mcp-api-key"
+      }
+    }
+  }
+}
+```
+
+### Legacy HTTP+SSE
+
+Only use if your client doesn't yet support Streamable HTTP:
 
 ```json
 {
